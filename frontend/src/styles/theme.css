@@ -1,0 +1,105 @@
+:root {
+  --aw-bg: #2a3140;
+  --aw-bg-panel: #343c4d;
+  --aw-bg-elevated: #3d4659;
+  --aw-bg-input: #424b5e;
+  --aw-text: #dde3ee;
+  --aw-text-muted: #95a0b5;
+  --aw-accent: #7eb3e8;
+  --aw-accent-soft: rgba(126, 179, 232, 0.14);
+  --aw-send: #6ec49a;
+  --aw-border: #4a5468;
+  --aw-danger: #e09a92;
+  --aw-radius: 10px;
+  --aw-font: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --aw-mono: "Cascadia Code", Consolas, "Courier New", monospace;
+
+  --el-bg-color: var(--aw-bg-panel);
+  --el-bg-color-overlay: var(--aw-bg-elevated);
+  --el-bg-color-page: var(--aw-bg);
+  --el-text-color-primary: var(--aw-text);
+  --el-text-color-regular: #c5cdd9;
+  --el-text-color-secondary: var(--aw-text-muted);
+  --el-text-color-placeholder: #7a8498;
+  --el-border-color: var(--aw-border);
+  --el-border-color-light: #556075;
+  --el-border-color-lighter: #4a5468;
+  --el-fill-color-blank: var(--aw-bg-input);
+  --el-fill-color-light: var(--aw-bg-elevated);
+  --el-color-primary: var(--aw-accent);
+  --el-color-success: var(--aw-send);
+  --el-color-danger: var(--aw-danger);
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--aw-bg);
+  color: var(--aw-text);
+  font-family: var(--aw-font);
+}
+
+#app {
+  min-height: 100vh;
+}
+
+.el-button--primary {
+  --el-button-bg-color: #5a96cc;
+  --el-button-border-color: #5a96cc;
+  --el-button-hover-bg-color: #6ba8db;
+  --el-button-hover-border-color: #6ba8db;
+}
+
+.el-input__wrapper,
+.el-textarea__inner,
+.el-select__wrapper {
+  background-color: var(--aw-bg-input) !important;
+  box-shadow: 0 0 0 1px var(--aw-border) inset !important;
+}
+
+.el-input__inner,
+.el-textarea__inner {
+  color: var(--aw-text) !important;
+}
+
+.el-tree {
+  --el-tree-node-hover-bg-color: var(--aw-accent-soft);
+  --el-tree-text-color: var(--aw-text);
+  background: transparent;
+  color: var(--aw-text);
+}
+
+.el-tree-node.is-current > .el-tree-node__content {
+  background-color: var(--aw-accent-soft) !important;
+}
+
+.el-radio-button__inner {
+  background: var(--aw-bg-input);
+  border-color: var(--aw-border);
+  color: var(--aw-text-muted);
+}
+
+.el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background-color: var(--aw-accent-soft);
+  border-color: var(--aw-accent);
+  color: var(--aw-accent);
+}
+
+.el-drawer {
+  background: var(--aw-bg-panel) !important;
+}
+
+.el-drawer__header {
+  color: var(--aw-text) !important;
+}
+
+.el-message-box {
+  background: var(--aw-bg-panel) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
