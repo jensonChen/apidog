@@ -139,7 +139,7 @@ function handleConfirm() {
     @open="handleOpen"
   >
     <p class="dialog-hint">
-      当前是新请求，将新增一条接口。若从左侧打开已有接口再保存，会直接更新原记录。
+      新请求将新增接口；打开已有接口再保存会更新原记录。
     </p>
 
     <label class="field-label">接口名称 <span class="required">*</span></label>

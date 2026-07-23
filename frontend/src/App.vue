@@ -207,11 +207,47 @@ onUnmounted(() => {
       <header class="topbar">
         <div class="brand">
           <div class="brand-mark" aria-hidden="true">
-            <img src="/favicon.svg" alt="" width="40" height="40" />
+            <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="awBrandBg" x1="12" y1="8" x2="54" y2="58">
+                  <stop stop-color="#243140" />
+                  <stop offset="1" stop-color="#1a2430" />
+                </linearGradient>
+                <linearGradient id="awBrandDog" x1="18" y1="16" x2="46" y2="48">
+                  <stop stop-color="#7ec4b4" />
+                  <stop offset="1" stop-color="#5a9fad" />
+                </linearGradient>
+              </defs>
+              <rect width="64" height="64" rx="14" fill="url(#awBrandBg)" />
+              <rect
+                x="8"
+                y="8"
+                width="48"
+                height="48"
+                rx="12"
+                fill="#2a3848"
+                opacity="0.55"
+              />
+              <path
+                fill="url(#awBrandDog)"
+                d="M22 42c-1.2-6.2 1.4-12.8 6.8-16.2 2.2-1.4 3.4-3.8 3.1-6.4l-.2-1.6c-.2-1.4 1.2-2.4 2.4-1.8l4.2 2.1c1.4.7 3 .9 4.5.6l3.8-.8c1.5-.3 2.8 1.1 2.3 2.5l-1.4 3.7c-.5 1.4-.2 2.9.8 4 2.6 2.8 3.8 6.8 3.1 10.7-.8 4.6-4.4 8.2-9 9.1-6.8 1.3-13.3-2.2-15.4-5.9z"
+              />
+              <circle cx="34.5" cy="30.5" r="2.1" fill="#1a2430" />
+              <circle cx="35.1" cy="30" r="0.7" fill="#d7efe8" />
+              <circle cx="46.5" cy="18.5" r="3.2" fill="#c9a66b" />
+              <circle
+                cx="46.5"
+                cy="18.5"
+                r="5.2"
+                fill="none"
+                stroke="#c9a66b"
+                stroke-opacity="0.35"
+                stroke-width="1.5"
+              />
+            </svg>
           </div>
           <div>
             <h1>ApiDog</h1>
-            <p>多标签并行 · Chrome 粘贴即测 · 响应右侧固定可见</p>
           </div>
         </div>
       </header>
@@ -333,7 +369,7 @@ onUnmounted(() => {
   border: 1px solid var(--aw-border);
 }
 
-.brand-mark img {
+.brand-mark svg {
   width: 100%;
   height: 100%;
   display: block;
@@ -344,12 +380,6 @@ onUnmounted(() => {
   font-size: 20px;
   font-weight: 650;
   letter-spacing: 0.01em;
-}
-
-.topbar p {
-  margin: 3px 0 0;
-  color: var(--aw-text-muted);
-  font-size: 12px;
 }
 
 @media (max-width: 1200px) {

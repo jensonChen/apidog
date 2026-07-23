@@ -313,16 +313,12 @@ onUnmounted(() => {
     </div>
 
     <div v-if="tab.editMode === 'chrome'" class="chrome-panel">
-      <p class="hint">
-        从 Chrome 网络面板复制「标头」全部内容粘贴到下方；GET 参数或 POST JSON
-        粘贴到第二框（可选）。
-      </p>
-      <label class="field-label">Chrome 标头复制内容</label>
+      <label class="field-label">Chrome 标头</label>
       <el-input
         v-model="tab.chromeText"
         type="textarea"
         :rows="12"
-        placeholder="粘贴 请求网址 / 请求方法 / authorization / cookie ..."
+        placeholder="粘贴网络面板「标头」全文：请求网址 / 方法 / authorization / cookie ..."
         class="mono code-area"
       />
       <label class="field-label">GET 参数 或 POST JSON（可选）</label>
@@ -330,7 +326,7 @@ onUnmounted(() => {
         v-model="tab.payloadExtra"
         type="textarea"
         :rows="5"
-        placeholder='GET: refCols=default&msgOptionType=1  或  POST: {"page":1}'
+        placeholder='GET: a=1&b=2  或  POST: {"page":1}'
         class="mono code-area"
       />
       <div class="chrome-actions">
@@ -404,9 +400,7 @@ onUnmounted(() => {
       />
     </div>
 
-    <div v-else class="empty">
-      请从左侧选择接口（新标签打开），或使用 Chrome 粘贴
-    </div>
+    <div v-else class="empty">从左侧打开接口，或切换到 Chrome / Curl 模式</div>
 
     <SaveRequestDialog
       v-model="saveDialogVisible"
@@ -464,13 +458,6 @@ onUnmounted(() => {
   --el-button-border-color: var(--aw-send-deep);
   --el-button-hover-bg-color: var(--aw-send);
   --el-button-hover-border-color: var(--aw-send);
-}
-
-.hint {
-  margin: 0 0 10px;
-  font-size: 13px;
-  color: var(--aw-text-muted);
-  line-height: 1.6;
 }
 
 .field-label {

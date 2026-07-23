@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ApiDog">
+  <defs>
+    <linearGradient id="bg" x1="12" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#243140"/>
+      <stop offset="1" stop-color="#1a2430"/>
+    </linearGradient>
+    <linearGradient id="dog" x1="18" y1="16" x2="46" y2="48" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7ec4b4"/>
+      <stop offset="1" stop-color="#5a9fad"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- soft plate -->
+  <rect x="8" y="8" width="48" height="48" rx="12" fill="#2a3848" opacity="0.55"/>
+  <!-- dog head (geometric profile) -->
+  <path
+    fill="url(#dog)"
+    d="M22 42c-1.2-6.2 1.4-12.8 6.8-16.2 2.2-1.4 3.4-3.8 3.1-6.4l-.2-1.6c-.2-1.4 1.2-2.4 2.4-1.8l4.2 2.1c1.4.7 3 .9 4.5.6l3.8-.8c1.5-.3 2.8 1.1 2.3 2.5l-1.4 3.7c-.5 1.4-.2 2.9.8 4 2.6 2.8 3.8 6.8 3.1 10.7-.8 4.6-4.4 8.2-9 9.1-6.8 1.3-13.3-2.2-15.4-5.9z"
+  />
+  <!-- snout notch -->
+  <path
+    fill="#1e2a36"
+    opacity="0.35"
+    d="M40.5 36.2c1.8.2 3.4 1.3 4.2 2.9.4.8-.3 1.7-1.2 1.5-2.1-.4-3.8-1.8-4.6-3.7-.2-.6.4-1.1 1.6-.7z"
+  />
+  <!-- eye -->
+  <circle cx="34.5" cy="30.5" r="2.1" fill="#1a2430"/>
+  <circle cx="35.1" cy="30" r="0.7" fill="#d7efe8"/>
+  <!-- network pulse / status -->
+  <circle cx="46.5" cy="18.5" r="3.2" fill="#c9a66b"/>
+  <circle cx="46.5" cy="18.5" r="5.2" fill="none" stroke="#c9a66b" stroke-opacity="0.35" stroke-width="1.5"/>
+</svg>

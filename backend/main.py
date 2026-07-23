@@ -1,4 +1,5 @@
 import json
+import mimetypes
 import uuid
 from typing import Any
 
@@ -39,6 +40,9 @@ from storage import (
     save_project,
     save_workspace_index,
 )
+
+# Windows 下 .svg 常被标成 image/svg，浏览器 <img> 会拒载
+mimetypes.add_type("image/svg+xml", ".svg")
 
 app = FastAPI(title="ApiDog", version="2.0.0")
 config = load_config()

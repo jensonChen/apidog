@@ -36,15 +36,18 @@ if (-not (Test-Path (Join-Path $Backend ".venv"))) {
 & $Pip install -r (Join-Path $Backend "requirements.txt") -q | Out-Null
 
 $DistIndex = Join-Path $Frontend "dist\index.html"
-if (-not (Test-Path $DistIndex)) {
-    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+    if (-not (Test-Path $DistIndex)) {
         Show-Error "npm not found. Cannot build frontend."
         exit 1
     }
+}
+else {
     Push-Location $Frontend
     if (-not (Test-Path "node_modules")) {
         npm install | Out-Null
     }
+    # 后端直接托管 dist；每次启动重新构建，避免改 src 后刷新仍是旧界面
     npm run build | Out-Null
     Pop-Location
 }

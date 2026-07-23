@@ -76,7 +76,7 @@ async function copyBody() {
       </div>
     </div>
 
-    <div v-if="!result" class="empty">发送请求后，响应会固定显示在此区域</div>
+    <div v-if="!result" class="empty">暂无响应</div>
     <template v-else>
       <p v-if="result.resolved_url" class="url-line">
         {{ result.resolved_url }}

@@ -271,7 +271,6 @@ function methodClass(method?: string): string {
   <aside class="sidebar" :style="{ width: `${width}px` }">
     <div class="sidebar-head">
       <h2>接口集合</h2>
-      <span class="drag-hint">可拖拽整理</span>
     </div>
 
     <div class="toolbar">
@@ -395,12 +394,6 @@ function methodClass(method?: string): string {
   font-size: 15px;
   font-weight: 650;
   color: var(--aw-text);
-}
-
-.drag-hint {
-  font-size: 11px;
-  color: var(--aw-text-muted);
-  letter-spacing: 0.02em;
 }
 
 .toolbar {
