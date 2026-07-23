@@ -27,12 +27,13 @@ from app_constants import (
     SINGLE_INSTANCE_MUTEX_NAME,
     WIN_ERROR_ALREADY_EXISTS,
     WIN_MB_ICONERROR,
+    WINDOW_BACKGROUND_COLOR,
     WINDOW_HEIGHT,
     WINDOW_MIN_HEIGHT,
     WINDOW_MIN_WIDTH,
     WINDOW_WIDTH,
 )
-from config_loader import load_config, resolve_app_icon, resolve_data_dir, resolve_frontend_dist
+from config_loader import load_config, resolve_data_dir, resolve_frontend_dist
 
 
 class DesktopWindowApi:
@@ -168,9 +169,7 @@ def run() -> int:
         host = DEFAULT_HOST
         port = int(config["port"])
         frontend_dist = resolve_frontend_dist()
-        icon_path = resolve_app_icon()
         _append_startup_log(f"frontend_dist={frontend_dist} exists={frontend_dist.exists()}")
-        _append_startup_log(f"icon={icon_path}")
 
         if not frontend_dist.exists():
             raise RuntimeError(f"未找到前端资源目录: {frontend_dist}")
@@ -195,20 +194,17 @@ def run() -> int:
         import webview
 
         window_api = DesktopWindowApi()
-        window_kwargs: dict[str, Any] = {
-            "title": APP_DISPLAY_NAME,
-            "url": base_url,
-            "width": WINDOW_WIDTH,
-            "height": WINDOW_HEIGHT,
-            "min_size": (WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT),
-            "frameless": True,
-            "easy_drag": False,
-            "js_api": window_api,
-        }
-        if icon_path is not None:
-            window_kwargs["icon"] = str(icon_path)
-
-        window = webview.create_window(**window_kwargs)
+        window = webview.create_window(
+            APP_DISPLAY_NAME,
+            url=base_url,
+            width=WINDOW_WIDTH,
+            height=WINDOW_HEIGHT,
+            min_size=(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT),
+            frameless=True,
+            easy_drag=False,
+            js_api=window_api,
+            background_color=WINDOW_BACKGROUND_COLOR,
+        )
         window_api.window = window
         webview.start()
         _append_startup_log("window closed")

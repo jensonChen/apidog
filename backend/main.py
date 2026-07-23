@@ -46,7 +46,7 @@ from workspace_export import build_workspace_export_zip
 # Windows 下 .svg 常被标成 image/svg，浏览器 <img> 会拒载
 mimetypes.add_type("image/svg+xml", ".svg")
 
-app = FastAPI(title="ApiDog", version="2.1.1")
+app = FastAPI(title="ApiDog", version="2.1.2")
 config = load_config()
 ensure_data_layout()
 
@@ -144,7 +144,7 @@ def _remove_node(tree: list, node_id: str) -> bool:
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "ApiDog", "version": "2.1.1"}
+    return {"status": "ok", "service": "ApiDog", "version": "2.1.2"}
 
 
 @app.get("/api/config")
