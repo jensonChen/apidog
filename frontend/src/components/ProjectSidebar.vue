@@ -202,6 +202,8 @@ function findFirstRequest(nodes: TreeNode[]): ApiRequestItem | null {
 async function handleDeleteNode(row: TreeRow) {
   await ElMessageBox.confirm(`确定删除「${row.label}」吗？`, "删除确认", {
     type: "warning",
+    confirmButtonText: "确定",
+    cancelButtonText: "取消",
   });
   await deleteNode(props.projectId, row.id);
   ElMessage.success("已删除");
@@ -214,6 +216,8 @@ async function handleDeleteProject() {
     "删除项目",
     {
       type: "warning",
+      confirmButtonText: "确定",
+      cancelButtonText: "取消",
     },
   );
   await deleteProject(props.projectId);
