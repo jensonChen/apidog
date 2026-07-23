@@ -71,11 +71,18 @@ export interface HistoryItem {
   error?: string | null;
 }
 
+export interface WorkspaceContextState {
+  lastClickedFolderId: string | null;
+}
+
 export interface WorkbenchTab {
   id: string;
   title: string;
   editMode: "chrome" | "form" | "curl";
   draft: ApiRequestItem | null;
+  /** 是否已落库：侧栏打开或首次保存成功后为 true，保存时更新而非新增 */
+  isPersisted: boolean;
+  sourceFolderId: string | null;
   chromeText: string;
   payloadExtra: string;
   curlText: string;

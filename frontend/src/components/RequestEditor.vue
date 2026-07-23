@@ -1,15 +1,22 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from "vue";
+import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { ElMessage } from "element-plus";
-import type { WorkbenchTab } from "../types";
+import type { WorkbenchTab, WorkspaceContextState } from "../types";
 import {
   convertCurlToRequest,
   convertRequestToCurl,
   executeRequest,
   parseChromePaste,
-  saveProject,
 } from "../api/client";
 import { attachResponse } from "../composables/workbenchTabs";
+import {
+  canUpdateExistingRequest,
+  prepareTabForSaveDialog,
+  saveNewRequest,
+  updateExistingRequest,
+} from "../composables/saveNewRequest";
+import { suggestRequestName } from "../composables/workspaceContext";
+import SaveRequestDialog from "./SaveRequestDialog.vue";
 
 const tab = defineModel<WorkbenchTab>({ required: true });
 
@@ -17,6 +24,8 @@ const props = defineProps<{
   projectId: string;
   projectName: string;
   projectTree: import("../types").TreeNode[];
+  projects: Array<{ id: string; name: string; file: string }>;
+  workspaceContext: WorkspaceContextState;
 }>();
 
 const emit = defineEmits<{
@@ -26,6 +35,32 @@ const emit = defineEmits<{
 
 const loading = ref(false);
 const saving = ref(false);
+const preparingSave = ref(false);
+const saveDialogVisible = ref(false);
+
+const isUpdateSave = computed(() =>
+  canUpdateExistingRequest(tab.value, props.projectTree),
+);
+
+const saveShortcutHint = computed(() =>
+  isUpdateSave.value
+    ? "Ctrl+S 更新当前接口 · Ctrl+Enter 发送"
+    : "Ctrl+S 保存为新接口 · Ctrl+Enter 发送",
+);
+
+const suggestedSaveName = computed(() =>
+  suggestRequestName(tab.value.draft, tab.value.parsedPreview),
+);
+
+const defaultSaveFolderId = computed(() => {
+  if (tab.value.sourceFolderId) {
+    return tab.value.sourceFolderId;
+  }
+  if (props.workspaceContext.lastClickedFolderId) {
+    return props.workspaceContext.lastClickedFolderId;
+  }
+  return null;
+});
 
 async function applyParsedRequest(request: import("../types").ApiRequestItem) {
   tab.value.draft = request;
@@ -116,44 +151,66 @@ function removeHeader(index: number) {
   tab.value.draft?.headers.splice(index, 1);
 }
 
-function updateTreeRequest(nodes: import("../types").TreeNode[]): boolean {
-  if (!tab.value.draft) {
-    return false;
+async function handleUpdateCurrent() {
+  saving.value = true;
+  try {
+    await updateExistingRequest({
+      tab: tab.value,
+      projectId: props.projectId,
+      projectName: props.projectName,
+      projectTree: props.projectTree,
+    });
+    ElMessage.success("已更新当前接口");
+    emit("saved");
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "更新失败");
+  } finally {
+    saving.value = false;
   }
-  for (let index = 0; index < nodes.length; index += 1) {
-    const node = nodes[index];
-    if (node.type === "request" && node.id === tab.value.draft.id) {
-      nodes[index] = { ...tab.value.draft };
-      return true;
+}
+
+async function openSaveDialog() {
+  preparingSave.value = true;
+  try {
+    const draft = await prepareTabForSaveDialog(tab.value);
+    if (!draft) {
+      return;
     }
-    if (node.type === "folder" && updateTreeRequest(node.children)) {
-      return true;
-    }
+    saveDialogVisible.value = true;
+  } finally {
+    preparingSave.value = false;
   }
-  return false;
 }
 
 async function handleSave() {
-  if (!tab.value.draft || saving.value || !props.projectId) {
+  if (saving.value || preparingSave.value) {
     return;
   }
+  if (!props.projectId || !props.projectName) {
+    ElMessage.warning("请先在左侧选择或创建一个项目");
+    return;
+  }
+  if (isUpdateSave.value) {
+    await handleUpdateCurrent();
+    return;
+  }
+  await openSaveDialog();
+}
+
+async function handleSaveConfirm(
+  form: import("../composables/saveNewRequest").SaveFormValues,
+) {
   saving.value = true;
   try {
-    if (tab.value.editMode === "curl") {
-      await syncCurlToForm();
-    }
-    const tree = JSON.parse(JSON.stringify(props.projectTree));
-    if (!updateTreeRequest(tree)) {
-      tree.push({ ...tab.value.draft });
-    }
-    await saveProject({
-      id: props.projectId,
-      name: props.projectName,
-      updated_at: "",
-      tree,
+    await saveNewRequest({
+      tab: tab.value,
+      form,
+      projects: props.projects,
+      currentProjectId: props.projectId,
+      currentProjectName: props.projectName,
     });
-    tab.value.title = tab.value.draft.name;
-    ElMessage.success("已保存到当前项目");
+    saveDialogVisible.value = false;
+    ElMessage.success("已保存为新接口");
     emit("saved");
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "保存失败");
@@ -200,11 +257,7 @@ function handleKeydown(event: KeyboardEvent) {
   }
   if (event.key.toLowerCase() === "s") {
     event.preventDefault();
-    if (tab.value.editMode === "chrome") {
-      void handleParseChrome().then(() => handleSave());
-    } else {
-      void handleSave();
-    }
+    void handleSave();
     return;
   }
   if (event.key === "Enter") {
@@ -243,12 +296,8 @@ onUnmounted(() => {
         <el-radio-button value="form">表单模式</el-radio-button>
         <el-radio-button value="curl">Curl 模式</el-radio-button>
       </el-radio-group>
-      <span class="shortcut-hint">Ctrl+S 保存 · Ctrl+Enter 发送</span>
-      <el-button
-        v-if="tab.editMode !== 'chrome'"
-        :loading="saving"
-        @click="handleSave"
-      >
+      <span class="shortcut-hint">{{ saveShortcutHint }}</span>
+      <el-button :loading="saving || preparingSave" @click="handleSave">
         保存
       </el-button>
       <el-button
@@ -296,7 +345,7 @@ onUnmounted(() => {
     <div v-else-if="tab.editMode === 'form' && tab.draft" class="form-panel">
       <el-input
         v-model="tab.draft.name"
-        placeholder="接口名称"
+        placeholder="接口名称（保存时可再确认）"
         class="name-input"
       />
       <div class="url-row">
@@ -358,6 +407,17 @@ onUnmounted(() => {
     <div v-else class="empty">
       请从左侧选择接口（新标签打开），或使用 Chrome 粘贴
     </div>
+
+    <SaveRequestDialog
+      v-model="saveDialogVisible"
+      :suggested-name="suggestedSaveName"
+      :default-project-id="projectId"
+      :default-project-name="projectName"
+      :default-folder-id="defaultSaveFolderId"
+      :projects="projects"
+      :project-tree="projectTree"
+      @confirm="handleSaveConfirm"
+    />
   </section>
 </template>
 

@@ -1,12 +1,17 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { ElMessage } from "element-plus";
 import ProjectSidebar from "./components/ProjectSidebar.vue";
 import RequestEditor from "./components/RequestEditor.vue";
 import ResponsePanel from "./components/ResponsePanel.vue";
 import HistoryPanel from "./components/HistoryPanel.vue";
 import SessionTabBar from "./components/SessionTabBar.vue";
-import type { ApiRequestItem, HistoryItem, ProjectCollection } from "./types";
+import type {
+  ApiRequestItem,
+  HistoryItem,
+  ProjectCollection,
+  WorkspaceContextState,
+} from "./types";
 import {
   convertRequestToCurl,
   fetchHistory,
@@ -17,12 +22,23 @@ import {
   createEmptyTab,
   createTabFromRequest,
 } from "./composables/workbenchTabs";
+import { findRequestParentFolderId } from "./composables/workspaceContext";
+
+const SIDEBAR_WIDTH_STORAGE_KEY = "aw-sidebar-width";
+const SIDEBAR_WIDTH_DEFAULT = 300;
+const SIDEBAR_WIDTH_MIN = 220;
+const SIDEBAR_WIDTH_MAX = 520;
 
 const projects = ref<Array<{ id: string; name: string; file: string }>>([]);
 const project = ref<ProjectCollection | null>(null);
 const historyItems = ref<HistoryItem[]>([]);
 const tabs = ref([createEmptyTab()]);
 const activeTabId = ref(tabs.value[0].id);
+const workspaceContext = ref<WorkspaceContextState>({
+  lastClickedFolderId: null,
+});
+const sidebarWidth = ref(SIDEBAR_WIDTH_DEFAULT);
+const isResizingSidebar = ref(false);
 
 const activeTab = computed({
   get() {
@@ -37,6 +53,49 @@ const activeTab = computed({
     }
   },
 });
+
+function clampSidebarWidth(width: number): number {
+  return Math.min(SIDEBAR_WIDTH_MAX, Math.max(SIDEBAR_WIDTH_MIN, width));
+}
+
+function loadSidebarWidth() {
+  const raw = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
+  if (!raw) {
+    return;
+  }
+  const parsed = Number(raw);
+  if (Number.isFinite(parsed)) {
+    sidebarWidth.value = clampSidebarWidth(parsed);
+  }
+}
+
+function persistSidebarWidth() {
+  localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(sidebarWidth.value));
+}
+
+function handleSidebarResizeMove(event: MouseEvent) {
+  if (!isResizingSidebar.value) {
+    return;
+  }
+  sidebarWidth.value = clampSidebarWidth(event.clientX);
+}
+
+function handleSidebarResizeEnd() {
+  if (!isResizingSidebar.value) {
+    return;
+  }
+  isResizingSidebar.value = false;
+  document.body.style.cursor = "";
+  document.body.style.userSelect = "";
+  persistSidebarWidth();
+}
+
+function startSidebarResize(event: MouseEvent) {
+  event.preventDefault();
+  isResizingSidebar.value = true;
+  document.body.style.cursor = "col-resize";
+  document.body.style.userSelect = "none";
+}
 
 async function loadWorkspace() {
   const workspace = await fetchWorkspace();
@@ -54,12 +113,19 @@ async function loadWorkspace() {
 }
 
 async function openRequestInNewTab(request: ApiRequestItem) {
-  const tab = createTabFromRequest(request);
+  const sourceFolderId = project.value
+    ? findRequestParentFolderId(project.value.tree, request.id)
+    : null;
+  const tab = createTabFromRequest(request, sourceFolderId);
   if (tab.draft) {
     tab.curlText = await convertRequestToCurl(tab.draft);
   }
   tabs.value.push(tab);
   activeTabId.value = tab.id;
+}
+
+function handleWorkspaceContextUpdate(folderId: string | null) {
+  workspaceContext.value.lastClickedFolderId = folderId;
 }
 
 function handleAddTab() {
@@ -102,22 +168,39 @@ async function handleExecuted() {
 }
 
 onMounted(() => {
+  loadSidebarWidth();
+  window.addEventListener("mousemove", handleSidebarResizeMove);
+  window.addEventListener("mouseup", handleSidebarResizeEnd);
   loadWorkspace().catch((error) => {
     ElMessage.error(error instanceof Error ? error.message : "加载失败");
   });
 });
+
+onUnmounted(() => {
+  window.removeEventListener("mousemove", handleSidebarResizeMove);
+  window.removeEventListener("mouseup", handleSidebarResizeEnd);
+});
 </script>
 
 <template>
-  <div class="layout">
+  <div class="layout" :class="{ resizing: isResizingSidebar }">
     <ProjectSidebar
       v-if="project"
       :project-id="project.id"
       :project-name="project.name"
       :tree="project.tree"
       :projects="projects"
+      :width="sidebarWidth"
       @select-request="openRequestInNewTab"
       @project-changed="handleProjectChanged"
+      @update-workspace-context="handleWorkspaceContextUpdate"
+    />
+
+    <div
+      v-if="project"
+      class="sidebar-resizer"
+      title="拖动调整左侧宽度"
+      @mousedown="startSidebarResize"
     />
 
     <div class="center-column">
@@ -125,7 +208,7 @@ onMounted(() => {
         <div class="brand">
           <div class="brand-mark">AW</div>
           <div>
-            <h1>ApiWorkbench</h1>
+            <h1>ApiDog</h1>
             <p>多标签并行 · Chrome 粘贴即测 · 响应右侧固定可见</p>
           </div>
         </div>
@@ -146,6 +229,8 @@ onMounted(() => {
         :project-id="project?.id || ''"
         :project-name="project?.name || ''"
         :project-tree="project?.tree || []"
+        :projects="projects"
+        :workspace-context="workspaceContext"
         @saved="handleProjectChanged"
         @executed="handleExecuted"
       />
@@ -178,6 +263,37 @@ onMounted(() => {
       transparent 32%
     ),
     var(--aw-bg);
+}
+
+.layout.resizing {
+  cursor: col-resize;
+}
+
+.sidebar-resizer {
+  width: 6px;
+  flex-shrink: 0;
+  margin-left: -3px;
+  margin-right: -3px;
+  position: relative;
+  z-index: 5;
+  cursor: col-resize;
+  background: transparent;
+}
+
+.sidebar-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.sidebar-resizer:hover::after,
+.layout.resizing .sidebar-resizer::after {
+  background: var(--aw-accent);
 }
 
 .center-column {

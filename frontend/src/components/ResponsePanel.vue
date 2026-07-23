@@ -30,6 +30,13 @@ const statusTagType = computed(() => {
   return "warning";
 });
 
+function openResponseDialog() {
+  if (!props.result || !formattedBody.value) {
+    return;
+  }
+  dialogVisible.value = true;
+}
+
 async function copyBody() {
   if (!formattedBody.value) {
     ElMessage.warning("没有可复制的内容");
@@ -75,7 +82,11 @@ async function copyBody() {
         {{ result.resolved_url }}
       </p>
       <p v-if="result.error" class="error-line">{{ result.error }}</p>
-      <div class="body-wrap">
+      <div
+        class="body-wrap"
+        title="双击放大查看"
+        @dblclick="openResponseDialog"
+      >
         <pre class="body-pre">{{ formattedBody }}</pre>
       </div>
     </template>
@@ -87,6 +98,8 @@ async function copyBody() {
       top="4vh"
       class="response-dialog"
       destroy-on-close
+      :close-on-press-escape="true"
+      @close="dialogVisible = false"
     >
       <div class="dialog-meta">
         <el-tag :type="statusTagType">
@@ -185,6 +198,7 @@ async function copyBody() {
   background: var(--aw-bg-input);
   border: 1px solid var(--aw-border);
   border-radius: 8px;
+  cursor: pointer;
 }
 
 .body-pre {

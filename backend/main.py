@@ -40,7 +40,7 @@ from storage import (
     save_workspace_index,
 )
 
-app = FastAPI(title="ApiWorkbench", version="2.0.0")
+app = FastAPI(title="ApiDog", version="2.0.0")
 config = load_config()
 ensure_data_layout()
 
@@ -138,7 +138,7 @@ def _remove_node(tree: list, node_id: str) -> bool:
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "ApiWorkbench", "version": "2.0.0"}
+    return {"status": "ok", "service": "ApiDog", "version": "2.0.0"}
 
 
 @app.get("/api/config")

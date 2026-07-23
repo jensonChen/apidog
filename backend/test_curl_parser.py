@@ -31,3 +31,12 @@ def test_parse_simple_get():
     parsed = parse_curl("curl http://127.0.0.1:9019/starter")
     assert parsed.method == "GET"
     assert parsed.url == "http://127.0.0.1:9019/starter"
+
+
+def test_parse_data_raw_without_trailing_brace_in_url():
+    parsed = parse_curl(
+        'curl http://127.0.0.1:9019/pii_post_query/json -H "content-type: application/json" '
+        '--data-raw "{\\"chatMessageList\\":[{\\"query\\": \\"test\\"}]}"'
+    )
+    assert parsed.url == "http://127.0.0.1:9019/pii_post_query/json"
+    assert parsed.method == "POST"

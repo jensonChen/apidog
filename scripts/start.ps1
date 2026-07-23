@@ -1,4 +1,4 @@
-$Root = "F:\ApiWorkbench"
+$Root = Split-Path -Parent $PSScriptRoot
 $Backend = Join-Path $Root "backend"
 $Frontend = Join-Path $Root "frontend"
 $Python = Join-Path $Backend ".venv\Scripts\python.exe"
@@ -8,7 +8,7 @@ $AppUrl = "http://127.0.0.1:19527"
 
 function Show-Error([string]$Message) {
     Add-Type -AssemblyName System.Windows.Forms
-    [void][System.Windows.Forms.MessageBox]::Show($Message, "ApiWorkbench")
+    [void][System.Windows.Forms.MessageBox]::Show($Message, "ApiDog")
 }
 
 function Stop-Port([int]$Port) {
@@ -17,7 +17,7 @@ function Stop-Port([int]$Port) {
 }
 
 if (-not (Test-Path $Root)) {
-    Show-Error "Path not found: F:\ApiWorkbench"
+    Show-Error "Path not found: $Root"
     exit 1
 }
 
@@ -67,7 +67,7 @@ for ($i = 0; $i -lt 25; $i++) {
 }
 
 if (-not $ready) {
-    Show-Error "Backend failed to start. Run F:\ApiWorkbench\stop.bat and retry."
+    Show-Error "Backend failed to start. Run stop.bat and retry."
     exit 1
 }
 

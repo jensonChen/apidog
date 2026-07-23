@@ -10,6 +10,8 @@ export function createEmptyTab(title = "新请求"): WorkbenchTab {
     title,
     editMode: "chrome",
     draft: null,
+    isPersisted: false,
+    sourceFolderId: null,
     chromeText: "",
     payloadExtra: "",
     curlText: "",
@@ -18,12 +20,17 @@ export function createEmptyTab(title = "新请求"): WorkbenchTab {
   };
 }
 
-export function createTabFromRequest(request: ApiRequestItem): WorkbenchTab {
+export function createTabFromRequest(
+  request: ApiRequestItem,
+  sourceFolderId: string | null = null,
+): WorkbenchTab {
   return {
     id: createTabId(),
     title: request.name || "未命名接口",
     editMode: "form",
     draft: JSON.parse(JSON.stringify(request)),
+    isPersisted: true,
+    sourceFolderId,
     chromeText: "",
     payloadExtra: "",
     curlText: "",
@@ -39,7 +46,8 @@ export function tabTitleFromResponse(
   if (tab.draft?.name && tab.draft.name !== "Chrome 导入") {
     return tab.draft.name;
   }
-  const url = result.resolved_url || result.parsed_url || tab.parsedPreview?.url;
+  const url =
+    result.resolved_url || result.parsed_url || tab.parsedPreview?.url;
   if (!url) {
     return tab.title;
   }
@@ -51,7 +59,10 @@ export function tabTitleFromResponse(
   }
 }
 
-export function attachResponse(tab: WorkbenchTab, result: ExecuteResponse): void {
+export function attachResponse(
+  tab: WorkbenchTab,
+  result: ExecuteResponse,
+): void {
   tab.response = result;
   tab.title = tabTitleFromResponse(tab, result);
 }

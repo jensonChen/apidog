@@ -117,5 +117,5 @@ def parse_curl(curl_text: str) -> ParsedCurl:
     if not url_match:
         raise ValueError("未找到请求 URL，请检查 curl 命令")
 
-    parsed.url = url_match.group(1)
+    parsed.url = url_match.group(1).rstrip("})],;")
     return parsed
