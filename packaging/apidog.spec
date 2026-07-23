@@ -69,6 +69,9 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=str(ROOT / "frontend" / "public" / "app.ico")
+    if (ROOT / "frontend" / "public" / "app.ico").exists()
+    else None,
 )
 
 coll = COLLECT(

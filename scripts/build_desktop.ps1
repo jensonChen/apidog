@@ -58,9 +58,17 @@ Write-Host "Desktop onedir ready: $PyInstallerDist"
 
 $Iscc = Get-Command "iscc" -ErrorAction SilentlyContinue
 if (-not $Iscc) {
-    $defaultIscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
-    if (Test-Path $defaultIscc) {
-        $Iscc = Get-Item $defaultIscc
+    $defaultIsccPaths = @(
+        "C:\Program Files\Inno Setup 7\ISCC.exe",
+        "C:\Program Files (x86)\Inno Setup 7\ISCC.exe",
+        "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+        "C:\Program Files\Inno Setup 6\ISCC.exe"
+    )
+    foreach ($candidate in $defaultIsccPaths) {
+        if (Test-Path $candidate) {
+            $Iscc = Get-Item $candidate
+            break
+        }
     }
 }
 

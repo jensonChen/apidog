@@ -5,6 +5,7 @@ from typing import Any
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from config_loader import load_config, resolve_frontend_dist
@@ -40,11 +41,12 @@ from storage import (
     save_project,
     save_workspace_index,
 )
+from workspace_export import build_workspace_export_zip
 
 # Windows 下 .svg 常被标成 image/svg，浏览器 <img> 会拒载
 mimetypes.add_type("image/svg+xml", ".svg")
 
-app = FastAPI(title="ApiDog", version="2.1.0")
+app = FastAPI(title="ApiDog", version="2.1.1")
 config = load_config()
 ensure_data_layout()
 
@@ -142,7 +144,7 @@ def _remove_node(tree: list, node_id: str) -> bool:
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "ApiDog", "version": "2.1.0"}
+    return {"status": "ok", "service": "ApiDog", "version": "2.1.1"}
 
 
 @app.get("/api/config")
@@ -158,6 +160,22 @@ async def get_workspace():
         "projects": list_projects(),
         "environments": list_environments(),
     }
+
+
+@app.get("/api/workspace/export")
+async def export_workspace():
+    try:
+        payload, filename = build_workspace_export_zip()
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    headers = {
+        "Content-Disposition": f'attachment; filename="{filename}"',
+    }
+    return Response(
+        content=payload,
+        media_type="application/zip",
+        headers=headers,
+    )
 
 
 @app.put("/api/workspace/active")

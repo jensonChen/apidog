@@ -2,7 +2,7 @@
 ; Build after PyInstaller output exists at packaging\dist\ApiDog\
 
 #define MyAppName "ApiDog"
-#define MyAppVersion "2.1.0"
+#define MyAppVersion "2.1.1"
 #define MyAppPublisher "ApiDog"
 #define MyAppExeName "ApiDog.exe"
 #define MyAppSourceDir "..\dist\ApiDog"
@@ -23,6 +23,7 @@ WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#MyAppExeName}
+SetupIconFile=..\..\frontend\public\app.ico
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"

@@ -24,11 +24,44 @@ export async function fetchWorkspace(): Promise<{
   return requestJson("/api/workspace");
 }
 
-export async function fetchProject(projectId: string): Promise<ProjectCollection> {
+export async function fetchConfig(): Promise<{
+  port: number;
+  default_timeout_seconds: number;
+  frontend_dev_port: number;
+  desktop_shell?: boolean;
+}> {
+  return requestJson("/api/config");
+}
+
+export async function exportWorkspace(): Promise<void> {
+  const response = await fetch("/api/workspace/export");
+  if (!response.ok) {
+    const detail = await response.text();
+    throw new Error(detail || `导出失败: HTTP ${response.status}`);
+  }
+  const blob = await response.blob();
+  const disposition = response.headers.get("Content-Disposition") || "";
+  const matched = /filename=\"?([^\";]+)\"?/i.exec(disposition);
+  const filename = matched?.[1] || "ApiDog-workspace.zip";
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = objectUrl;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(objectUrl);
+}
+
+export async function fetchProject(
+  projectId: string,
+): Promise<ProjectCollection> {
   return requestJson(`/api/projects/${projectId}`);
 }
 
-export async function saveProject(project: ProjectCollection): Promise<ProjectCollection> {
+export async function saveProject(
+  project: ProjectCollection,
+): Promise<ProjectCollection> {
   return requestJson(`/api/projects/${project.id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

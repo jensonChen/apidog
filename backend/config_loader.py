@@ -12,6 +12,8 @@ from app_constants import (
     DEFAULT_PORT,
     DEFAULT_TIMEOUT_SECONDS,
     ENV_DATA_DIR,
+    ENV_DESKTOP_SHELL,
+    ENV_DESKTOP_SHELL_TRUE,
     ENV_USE_APPDATA,
     ENV_USE_APPDATA_TRUE,
     FRONTEND_DEV_PORT,
@@ -56,6 +58,20 @@ def resolve_frontend_dist() -> Path:
     return resource_root / "frontend" / "dist"
 
 
+def resolve_app_icon() -> Path | None:
+    resource_root = resolve_resource_root()
+    candidates = [
+        resource_root / "frontend" / "public" / "app.ico",
+        resource_root / "frontend" / "dist" / "app.ico",
+        resource_root / "frontend" / "public" / "favicon.png",
+        resource_root / "frontend" / "dist" / "favicon.png",
+    ]
+    for path in candidates:
+        if path.is_file():
+            return path
+    return None
+
+
 def resolve_config_path(data_dir: Path | None = None) -> Path:
     base = data_dir if data_dir is not None else resolve_data_dir()
     return base / "config.json"
@@ -65,6 +81,7 @@ DEFAULT_CONFIG = {
     "port": DEFAULT_PORT,
     "default_timeout_seconds": DEFAULT_TIMEOUT_SECONDS,
     "frontend_dev_port": FRONTEND_DEV_PORT,
+    "desktop_shell": False,
 }
 
 
@@ -77,13 +94,17 @@ def load_config() -> dict:
             json.dumps(DEFAULT_CONFIG, indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
-        return dict(DEFAULT_CONFIG)
+        merged = dict(DEFAULT_CONFIG)
+    else:
+        raw = json.loads(config_path.read_text(encoding="utf-8"))
+        if not isinstance(raw, dict):
+            raise ValueError(f"配置文件格式无效: {config_path}")
+        merged = dict(DEFAULT_CONFIG)
+        merged.update(raw)
 
-    raw = json.loads(config_path.read_text(encoding="utf-8"))
-    if not isinstance(raw, dict):
-        raise ValueError(f"配置文件格式无效: {config_path}")
-    merged = dict(DEFAULT_CONFIG)
-    merged.update(raw)
+    merged["desktop_shell"] = (
+        os.environ.get(ENV_DESKTOP_SHELL) == ENV_DESKTOP_SHELL_TRUE or bool(merged.get("desktop_shell"))
+    )
     return merged
 
 

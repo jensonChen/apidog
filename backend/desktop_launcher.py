@@ -16,6 +16,7 @@ from typing import Any
 
 # Must run before backend modules resolve data paths.
 os.environ.setdefault("APIDOG_USE_APPDATA", "1")
+os.environ.setdefault("APIDOG_DESKTOP_SHELL", "1")
 
 from app_constants import (
     APP_DISPLAY_NAME,
@@ -31,7 +32,35 @@ from app_constants import (
     WINDOW_MIN_WIDTH,
     WINDOW_WIDTH,
 )
-from config_loader import load_config, resolve_data_dir, resolve_frontend_dist
+from config_loader import load_config, resolve_app_icon, resolve_data_dir, resolve_frontend_dist
+
+
+class DesktopWindowApi:
+    """Bridge for custom title-bar window controls."""
+
+    def __init__(self) -> None:
+        self.window: Any = None
+        self._is_maximized = False
+
+    def minimize(self) -> None:
+        if self.window is None:
+            raise RuntimeError("窗口未就绪")
+        self.window.minimize()
+
+    def toggle_maximize(self) -> None:
+        if self.window is None:
+            raise RuntimeError("窗口未就绪")
+        if self._is_maximized:
+            self.window.restore()
+            self._is_maximized = False
+            return
+        self.window.maximize()
+        self._is_maximized = True
+
+    def close(self) -> None:
+        if self.window is None:
+            raise RuntimeError("窗口未就绪")
+        self.window.destroy()
 
 
 def _startup_log_path() -> Path:
@@ -139,7 +168,9 @@ def run() -> int:
         host = DEFAULT_HOST
         port = int(config["port"])
         frontend_dist = resolve_frontend_dist()
+        icon_path = resolve_app_icon()
         _append_startup_log(f"frontend_dist={frontend_dist} exists={frontend_dist.exists()}")
+        _append_startup_log(f"icon={icon_path}")
 
         if not frontend_dist.exists():
             raise RuntimeError(f"未找到前端资源目录: {frontend_dist}")
@@ -163,15 +194,23 @@ def run() -> int:
 
         import webview
 
-        window = webview.create_window(
-            APP_DISPLAY_NAME,
-            url=base_url,
-            width=WINDOW_WIDTH,
-            height=WINDOW_HEIGHT,
-            min_size=(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT),
-        )
+        window_api = DesktopWindowApi()
+        window_kwargs: dict[str, Any] = {
+            "title": APP_DISPLAY_NAME,
+            "url": base_url,
+            "width": WINDOW_WIDTH,
+            "height": WINDOW_HEIGHT,
+            "min_size": (WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT),
+            "frameless": True,
+            "easy_drag": False,
+            "js_api": window_api,
+        }
+        if icon_path is not None:
+            window_kwargs["icon"] = str(icon_path)
+
+        window = webview.create_window(**window_kwargs)
+        window_api.window = window
         webview.start()
-        _ = window
         _append_startup_log("window closed")
         return 0
     except Exception as exc:

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { computed, ref, watch } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
 import type { ApiRequestItem, FolderItem, TreeNode } from "../types";
 import {
@@ -8,6 +8,7 @@ import {
   createProject,
   deleteNode,
   deleteProject,
+  exportWorkspace,
   importPostman,
   saveProject,
   setActiveWorkspace,
@@ -30,6 +31,8 @@ const emit = defineEmits<{
 
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const dragging = ref(false);
+const exporting = ref(false);
+const hasActiveProject = computed(() => Boolean(props.projectId));
 
 interface TreeRow {
   id: string;
@@ -155,6 +158,10 @@ async function handleCreateProject() {
 }
 
 async function handleAddFolder() {
+  if (!hasActiveProject.value) {
+    ElMessage.warning("请先创建或选择项目");
+    return;
+  }
   const { value } = await ElMessageBox.prompt("请输入模块名称", "新建模块", {
     confirmButtonText: "创建",
     cancelButtonText: "取消",
@@ -168,6 +175,10 @@ async function handleAddFolder() {
 }
 
 async function handleAddRequest() {
+  if (!hasActiveProject.value) {
+    ElMessage.warning("请先创建或选择项目");
+    return;
+  }
   const { value } = await ElMessageBox.prompt("请输入接口名称", "新建接口", {
     confirmButtonText: "创建",
     cancelButtonText: "取消",
@@ -211,6 +222,10 @@ async function handleDeleteNode(row: TreeRow) {
 }
 
 async function handleDeleteProject() {
+  if (!hasActiveProject.value) {
+    ElMessage.warning("当前没有可删除的项目");
+    return;
+  }
   await ElMessageBox.confirm(
     `确定删除项目「${props.projectName}」吗？`,
     "删除项目",
@@ -229,6 +244,21 @@ function triggerImport() {
   fileInputRef.value?.click();
 }
 
+async function handleExportWorkspace() {
+  if (exporting.value) {
+    return;
+  }
+  exporting.value = true;
+  try {
+    await exportWorkspace();
+    ElMessage.success("工作区数据已导出");
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : "导出失败");
+  } finally {
+    exporting.value = false;
+  }
+}
+
 async function handleImportFile(event: Event) {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
@@ -245,8 +275,8 @@ async function handleImportFile(event: Event) {
   }
 }
 
-async function handleProjectSelect(projectId: string) {
-  await setActiveWorkspace({ active_project_id: projectId });
+async function handleProjectSelect(projectId: string | null | undefined) {
+  await setActiveWorkspace({ active_project_id: projectId || "" });
   emit("projectChanged");
 }
 
@@ -274,14 +304,30 @@ function methodClass(method?: string): string {
 <template>
   <aside class="sidebar" :style="{ width: `${width}px` }">
     <div class="sidebar-head">
-      <h2>接口集合</h2>
+      <h2>Collections</h2>
+      <span class="sidebar-sub">接口集合</span>
     </div>
 
     <div class="toolbar">
+      <div class="toolbar-row primary-actions">
+        <el-button size="small" type="primary" @click="handleCreateProject">
+          新建
+        </el-button>
+        <el-button size="small" @click="triggerImport">导入</el-button>
+        <el-button
+          size="small"
+          :loading="exporting"
+          @click="handleExportWorkspace"
+        >
+          导出
+        </el-button>
+      </div>
+
       <el-select
-        :model-value="projectId"
+        :model-value="projectId || undefined"
         placeholder="选择项目"
         style="width: 100%"
+        clearable
         @change="handleProjectSelect"
       >
         <el-option
@@ -291,31 +337,32 @@ function methodClass(method?: string): string {
           :value="item.id"
         />
       </el-select>
+
       <div class="toolbar-row">
-        <el-button size="small" @click="handleCreateProject"
-          >新建项目</el-button
-        >
         <el-button
           size="small"
-          type="danger"
-          plain
-          @click="handleDeleteProject"
+          :disabled="!hasActiveProject"
+          @click="handleAddFolder"
         >
-          删项目
+          新建模块
         </el-button>
-      </div>
-      <div class="toolbar-row">
-        <el-button size="small" @click="handleAddFolder">新建模块</el-button>
-        <el-button size="small" @click="handleAddRequest">新建接口</el-button>
+        <el-button
+          size="small"
+          :disabled="!hasActiveProject"
+          @click="handleAddRequest"
+        >
+          新建接口
+        </el-button>
       </div>
       <el-button
         size="small"
-        type="primary"
+        type="danger"
         plain
+        :disabled="!hasActiveProject"
         style="width: 100%"
-        @click="triggerImport"
+        @click="handleDeleteProject"
       >
-        导入 Postman
+        删除当前项目
       </el-button>
       <input
         ref="fileInputRef"
@@ -326,7 +373,13 @@ function methodClass(method?: string): string {
       />
     </div>
 
+    <div v-if="!hasActiveProject" class="empty-panel">
+      <p class="empty-title">还没有项目</p>
+      <p class="empty-desc">点击「新建」创建集合，或「导入」Postman JSON。</p>
+    </div>
+
     <el-tree
+      v-else
       :data="treeData"
       node-key="id"
       default-expand-all
@@ -389,10 +442,10 @@ function methodClass(method?: string): string {
 
 .sidebar-head {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+  flex-direction: column;
+  align-items: flex-start;
   margin-bottom: 14px;
-  gap: 8px;
+  gap: 2px;
 }
 
 .sidebar-head h2 {
@@ -400,6 +453,11 @@ function methodClass(method?: string): string {
   font-size: 15px;
   font-weight: 650;
   color: var(--aw-text);
+}
+
+.sidebar-sub {
+  font-size: 12px;
+  color: var(--aw-text-muted);
 }
 
 .toolbar {
@@ -416,6 +474,33 @@ function methodClass(method?: string): string {
 
 .toolbar-row .el-button {
   flex: 1;
+}
+
+.primary-actions .el-button {
+  flex: 1;
+}
+
+.empty-panel {
+  margin-top: 24px;
+  padding: 16px;
+  border: 1px dashed var(--aw-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--aw-bg) 55%, transparent);
+  text-align: center;
+}
+
+.empty-title {
+  margin: 0 0 8px;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--aw-text);
+}
+
+.empty-desc {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--aw-text-muted);
 }
 
 .tree {
