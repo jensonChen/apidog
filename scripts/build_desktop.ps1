@@ -54,6 +54,11 @@ if (-not (Test-Path (Join-Path $PyInstallerDist "ApiDog.exe"))) {
     throw "ApiDog.exe not found under $PyInstallerDist"
 }
 
+$AppIco = Join-Path $Root "frontend\public\app.ico"
+if (Test-Path $AppIco) {
+    Copy-Item -Force $AppIco (Join-Path $PyInstallerDist "app.ico")
+}
+
 Write-Host "Desktop onedir ready: $PyInstallerDist"
 
 $Iscc = Get-Command "iscc" -ErrorAction SilentlyContinue
