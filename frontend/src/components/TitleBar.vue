@@ -126,18 +126,11 @@ onUnmounted(() => {
   padding: 0 12px;
 }
 
-.title-bar.desktop .drag-region {
-  -webkit-app-region: drag;
-  app-region: drag;
-}
-
 .brand {
   display: flex;
   align-items: center;
   gap: 10px;
   min-width: 0;
-  -webkit-app-region: no-drag;
-  app-region: no-drag;
 }
 
 .brand-mark {
@@ -148,6 +141,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   border: 1px solid var(--aw-border);
   background: #1a2430;
+  pointer-events: none;
 }
 
 .brand-name {

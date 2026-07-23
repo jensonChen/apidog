@@ -2,10 +2,11 @@
 ; Build after PyInstaller output exists at packaging\dist\ApiDog\
 
 #define MyAppName "ApiDog"
-#define MyAppVersion "2.1.2"
+#define MyAppVersion "2.1.3"
 #define MyAppPublisher "ApiDog"
 #define MyAppExeName "ApiDog.exe"
 #define MyAppSourceDir "..\dist\ApiDog"
+#define MyAppIcon "..\..\frontend\public\app.ico"
 
 [Setup]
 AppId={{8F3A2B1C-5D6E-4F7A-9B0C-1D2E3F4A5B6C}}
@@ -22,8 +23,8 @@ SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
 ArchitecturesInstallIn64BitMode=x64compatible
-UninstallDisplayIcon={app}\{#MyAppExeName}
-SetupIconFile=..\..\frontend\public\app.ico
+UninstallDisplayIcon={app}\app.ico
+SetupIconFile={#MyAppIcon}
 
 [Languages]
 Name: "chinesesimplified"; MessagesFile: "compiler:Languages\ChineseSimplified.isl"
@@ -34,12 +35,13 @@ Name: "desktopicon"; Description: "创建桌面快捷方式"; GroupDescription: 
 
 [Files]
 Source: "{#MyAppSourceDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "{#MyAppIcon}"; DestDir: "{app}"; DestName: "app.ico"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
-Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\app.ico"
+Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\app.ico"; Tasks: desktopicon
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "启动 {#MyAppName}"; Flags: nowait postinstall skipifsilent
 
-; 用户数据在 %AppData%\ApiDog，卸载时默认保留（不在 [UninstallDelete] 中删除）
+; 用户数据在 %AppData%\ApiDog，卸载时默认保留

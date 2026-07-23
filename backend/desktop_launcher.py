@@ -33,11 +33,12 @@ from app_constants import (
     WINDOW_MIN_WIDTH,
     WINDOW_WIDTH,
 )
-from config_loader import load_config, resolve_data_dir, resolve_frontend_dist
+from config_loader import load_config, resolve_app_icon, resolve_data_dir, resolve_frontend_dist
+from workspace_export import build_workspace_export_zip
 
 
 class DesktopWindowApi:
-    """Bridge for custom title-bar window controls."""
+    """Bridge for custom title-bar controls and native dialogs."""
 
     def __init__(self) -> None:
         self.window: Any = None
@@ -62,6 +63,28 @@ class DesktopWindowApi:
         if self.window is None:
             raise RuntimeError("窗口未就绪")
         self.window.destroy()
+
+    def export_workspace(self) -> dict[str, Any]:
+        if self.window is None:
+            raise RuntimeError("窗口未就绪")
+        import webview
+
+        payload, filename = build_workspace_export_zip()
+        desktop = Path.home() / "Desktop"
+        start_dir = str(desktop if desktop.exists() else Path.home())
+        selected = self.window.create_file_dialog(
+            webview.SAVE_DIALOG,
+            directory=start_dir,
+            save_filename=filename,
+            file_types=("Zip Files (*.zip)", "All files (*.*)"),
+        )
+        if not selected:
+            return {"ok": False, "cancelled": True, "path": ""}
+        target = Path(selected[0] if isinstance(selected, (list, tuple)) else selected)
+        if target.suffix.lower() != ".zip":
+            target = target.with_suffix(".zip")
+        target.write_bytes(payload)
+        return {"ok": True, "cancelled": False, "path": str(target)}
 
 
 def _startup_log_path() -> Path:
@@ -152,6 +175,20 @@ def _start_server(host: str, port: int) -> None:
         raise
 
 
+def _copy_icon_beside_exe() -> Path | None:
+    icon = resolve_app_icon()
+    if icon is None or not getattr(sys, "frozen", False):
+        return icon
+    target = Path(sys.executable).resolve().parent / "app.ico"
+    try:
+        if icon.resolve() != target.resolve():
+            target.write_bytes(icon.read_bytes())
+        return target
+    except OSError as exc:
+        _append_startup_log(f"copy icon failed: {exc}")
+        return icon
+
+
 def run() -> int:
     multiprocessing.freeze_support()
     _ensure_stdio()
@@ -169,7 +206,9 @@ def run() -> int:
         host = DEFAULT_HOST
         port = int(config["port"])
         frontend_dist = resolve_frontend_dist()
+        icon_path = _copy_icon_beside_exe()
         _append_startup_log(f"frontend_dist={frontend_dist} exists={frontend_dist.exists()}")
+        _append_startup_log(f"icon={icon_path}")
 
         if not frontend_dist.exists():
             raise RuntimeError(f"未找到前端资源目录: {frontend_dist}")
@@ -194,6 +233,7 @@ def run() -> int:
         import webview
 
         window_api = DesktopWindowApi()
+        # easy_drag=True：无边框窗口可拖动；勿依赖 WebView CSS app-region（易失效）
         window = webview.create_window(
             APP_DISPLAY_NAME,
             url=base_url,
@@ -201,7 +241,8 @@ def run() -> int:
             height=WINDOW_HEIGHT,
             min_size=(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT),
             frameless=True,
-            easy_drag=False,
+            easy_drag=True,
+            shadow=True,
             js_api=window_api,
             background_color=WINDOW_BACKGROUND_COLOR,
         )

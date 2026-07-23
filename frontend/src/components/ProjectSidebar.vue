@@ -9,7 +9,7 @@ import {
   deleteNode,
   deleteProject,
   exportWorkspace,
-  importPostman,
+  importWorkspaceFile,
   saveProject,
   setActiveWorkspace,
 } from "../api/client";
@@ -250,6 +250,31 @@ async function handleExportWorkspace() {
   }
   exporting.value = true;
   try {
+    const desktopApi = (
+      window as Window & {
+        pywebview?: {
+          api?: {
+            export_workspace?: () => Promise<{
+              ok: boolean;
+              cancelled?: boolean;
+              path?: string;
+            }>;
+          };
+        };
+      }
+    ).pywebview?.api;
+    if (desktopApi?.export_workspace) {
+      const result = await desktopApi.export_workspace();
+      if (result.cancelled) {
+        ElMessage.info("已取消导出");
+        return;
+      }
+      if (!result.ok) {
+        throw new Error("导出失败");
+      }
+      ElMessage.success(`已导出到：${result.path || "所选位置"}`);
+      return;
+    }
     await exportWorkspace();
     ElMessage.success("工作区数据已导出");
   } catch (error) {
@@ -267,8 +292,8 @@ async function handleImportFile(event: Event) {
     return;
   }
   try {
-    await importPostman(file);
-    ElMessage.success(`已导入 Postman 集合：${file.name}`);
+    const result = await importWorkspaceFile(file);
+    ElMessage.success(result.message);
     emit("projectChanged");
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : "导入失败");
@@ -367,15 +392,22 @@ function methodClass(method?: string): string {
       <input
         ref="fileInputRef"
         type="file"
-        accept="application/json,.json"
+        accept=".json,.zip,application/json,application/zip"
         hidden
         @change="handleImportFile"
       />
+      <p class="import-hint">
+        导入支持：Postman Collection(.json)、ApiDog 项目(.json)、本软件导出的
+        .zip
+      </p>
     </div>
 
     <div v-if="!hasActiveProject" class="empty-panel">
       <p class="empty-title">还没有项目</p>
-      <p class="empty-desc">点击「新建」创建集合，或「导入」Postman JSON。</p>
+      <p class="empty-desc">
+        点击「新建」创建集合；或「导入」Postman / ApiDog 项目 JSON / 导出的
+        zip。不要选仓库里随便的配置文件。
+      </p>
     </div>
 
     <el-tree
@@ -478,6 +510,13 @@ function methodClass(method?: string): string {
 
 .primary-actions .el-button {
   flex: 1;
+}
+
+.import-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--aw-text-muted);
 }
 
 .empty-panel {

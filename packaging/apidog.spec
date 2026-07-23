@@ -10,7 +10,11 @@ ROOT = SPECDIR.parent
 BACKEND = ROOT / "backend"
 FRONTEND_DIST = ROOT / "frontend" / "dist"
 
-datas = [(str(FRONTEND_DIST), "frontend/dist")]
+datas = [
+    (str(FRONTEND_DIST), "frontend/dist"),
+    (str(ROOT / "frontend" / "public" / "app.ico"), "."),
+    (str(ROOT / "frontend" / "public" / "favicon.png"), "frontend/dist"),
+]
 binaries = []
 hiddenimports = [
     "uvicorn.logging",

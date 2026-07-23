@@ -207,13 +207,16 @@ export async function convertCurlToRequest(
   });
 }
 
-export async function importPostman(file: File): Promise<{
-  project: ProjectCollection;
+export async function importWorkspaceFile(file: File): Promise<{
+  kind: string;
+  message: string;
+  project: ProjectCollection | null;
   imported_variables: Record<string, string>;
+  imported_projects: number;
 }> {
   const formData = new FormData();
   formData.append("file", file);
-  const response = await fetch("/api/import/postman", {
+  const response = await fetch("/api/import/workspace", {
     method: "POST",
     body: formData,
   });
@@ -222,6 +225,20 @@ export async function importPostman(file: File): Promise<{
     throw new Error(detail || `导入失败: HTTP ${response.status}`);
   }
   return response.json();
+}
+
+export async function importPostman(file: File): Promise<{
+  project: ProjectCollection;
+  imported_variables: Record<string, string>;
+}> {
+  const result = await importWorkspaceFile(file);
+  if (!result.project) {
+    throw new Error(result.message || "导入未生成项目");
+  }
+  return {
+    project: result.project,
+    imported_variables: result.imported_variables,
+  };
 }
 
 export async function fetchHistory(limit = 30): Promise<HistoryItem[]> {

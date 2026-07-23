@@ -25,6 +25,7 @@ from models import (
     WorkspaceIndex,
 )
 from postman_import import import_postman_collection
+from workspace_import import import_json_payload, import_workspace_zip
 from storage import (
     create_environment,
     create_project,
@@ -46,7 +47,7 @@ from workspace_export import build_workspace_export_zip
 # Windows 下 .svg 常被标成 image/svg，浏览器 <img> 会拒载
 mimetypes.add_type("image/svg+xml", ".svg")
 
-app = FastAPI(title="ApiDog", version="2.1.2")
+app = FastAPI(title="ApiDog", version="2.1.3")
 config = load_config()
 ensure_data_layout()
 
@@ -87,6 +88,14 @@ class ActiveWorkspaceRequest(BaseModel):
 
 class CurlConvertRequest(BaseModel):
     curl_text: str = Field(min_length=1)
+
+
+class ImportWorkspaceResponse(BaseModel):
+    kind: str
+    message: str
+    project: ProjectCollection | None = None
+    imported_variables: dict[str, str] = Field(default_factory=dict)
+    imported_projects: int = 0
 
 
 class ImportPostmanResponse(BaseModel):
@@ -144,7 +153,7 @@ def _remove_node(tree: list, node_id: str) -> bool:
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "ApiDog", "version": "2.1.2"}
+    return {"status": "ok", "service": "ApiDog", "version": "2.1.3"}
 
 
 @app.get("/api/config")
@@ -356,34 +365,42 @@ async def convert_request_to_curl(request: ApiRequestItem):
     return {"curl_text": build_curl_from_request(request)}
 
 
+@app.post("/api/import/workspace", response_model=ImportWorkspaceResponse)
+async def import_workspace(file: UploadFile = File(...)):
+    raw = await file.read()
+    filename = (file.filename or "").lower()
+    try:
+        if filename.endswith(".zip"):
+            result = import_workspace_zip(raw)
+        else:
+            try:
+                payload = json.loads(raw.decode("utf-8"))
+            except json.JSONDecodeError as exc:
+                raise HTTPException(status_code=400, detail="导入文件不是有效 JSON") from exc
+            if not isinstance(payload, dict):
+                raise HTTPException(status_code=400, detail="导入 JSON 格式无效")
+            result = import_json_payload(payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return ImportWorkspaceResponse(
+        kind=str(result["kind"]),
+        message=str(result["message"]),
+        project=result.get("project"),
+        imported_variables=result.get("imported_variables") or {},
+        imported_projects=int(result.get("imported_projects") or 0),
+    )
+
+
 @app.post("/api/import/postman", response_model=ImportPostmanResponse)
 async def import_postman(file: UploadFile = File(...)):
-    raw = await file.read()
-    try:
-        payload = json.loads(raw.decode("utf-8"))
-    except json.JSONDecodeError as exc:
-        raise HTTPException(status_code=400, detail="Postman 文件不是有效 JSON") from exc
-
-    if not isinstance(payload, dict):
-        raise HTTPException(status_code=400, detail="Postman 集合格式无效")
-
-    project, imported_variables = import_postman_collection(payload)
-    saved = register_project(project)
-    index = load_workspace_index()
-    index.active_project_id = saved.id
-    save_workspace_index(index)
-
-    if imported_variables:
-        try:
-            environment = load_environment("default")
-            merged = dict(environment.variables)
-            merged.update(imported_variables)
-            environment.variables = merged
-            save_environment(environment)
-        except FileNotFoundError:
-            pass
-
-    return ImportPostmanResponse(project=saved, imported_variables=imported_variables)
+    result = await import_workspace(file)
+    if result.project is None:
+        raise HTTPException(status_code=400, detail=result.message or "导入未生成项目")
+    return ImportPostmanResponse(
+        project=result.project,
+        imported_variables=result.imported_variables,
+    )
 
 
 if FRONTEND_DIST.exists():
