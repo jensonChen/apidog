@@ -2,3 +2,7 @@ backend/__pycache__/*.pyc
 backend/.venv/*
 frontend/node_modules/*
 data/*
+packaging/build/*
+packaging/dist/*
+packaging/output/*
+*.spec.bak

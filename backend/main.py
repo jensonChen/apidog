@@ -7,7 +7,7 @@ from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from config_loader import load_config
+from config_loader import load_config, resolve_frontend_dist
 from chrome_parser import parse_chrome_paste
 from curl_builder import build_curl_from_request, request_from_parsed
 from curl_parser import parse_curl
@@ -44,7 +44,7 @@ from storage import (
 # Windows 下 .svg 常被标成 image/svg，浏览器 <img> 会拒载
 mimetypes.add_type("image/svg+xml", ".svg")
 
-app = FastAPI(title="ApiDog", version="2.0.0")
+app = FastAPI(title="ApiDog", version="2.1.0")
 config = load_config()
 ensure_data_layout()
 
@@ -61,7 +61,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-FRONTEND_DIST = __import__("pathlib").Path(__file__).resolve().parent.parent / "frontend" / "dist"
+FRONTEND_DIST = resolve_frontend_dist()
 
 
 class CreateProjectRequest(BaseModel):
@@ -142,7 +142,7 @@ def _remove_node(tree: list, node_id: str) -> bool:
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "ApiDog", "version": "2.0.0"}
+    return {"status": "ok", "service": "ApiDog", "version": "2.1.0"}
 
 
 @app.get("/api/config")
