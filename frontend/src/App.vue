@@ -206,7 +206,9 @@ onUnmounted(() => {
     <div class="center-column">
       <header class="topbar">
         <div class="brand">
-          <div class="brand-mark">AW</div>
+          <div class="brand-mark" aria-hidden="true">
+            <img src="/favicon.svg" alt="" width="40" height="40" />
+          </div>
           <div>
             <h1>ApiDog</h1>
             <p>多标签并行 · Chrome 粘贴即测 · 响应右侧固定可见</p>
@@ -252,16 +254,8 @@ onUnmounted(() => {
   height: 100vh;
   overflow: hidden;
   background:
-    radial-gradient(
-      circle at 12% 8%,
-      rgba(126, 179, 232, 0.08),
-      transparent 36%
-    ),
-    radial-gradient(
-      circle at 88% 0%,
-      rgba(110, 196, 154, 0.06),
-      transparent 32%
-    ),
+    radial-gradient(circle at 12% 8%, var(--aw-glow-a), transparent 36%),
+    radial-gradient(circle at 88% 0%, var(--aw-glow-b), transparent 32%),
     var(--aw-bg);
 }
 
@@ -301,8 +295,9 @@ onUnmounted(() => {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  padding: 14px 12px 14px 0;
+  padding: 16px 14px 16px 0;
   overflow: hidden;
+  gap: 2px;
 }
 
 .right-column {
@@ -310,14 +305,14 @@ onUnmounted(() => {
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 14px 14px 14px 0;
+  gap: 12px;
+  padding: 16px 16px 16px 0;
   min-height: 0;
   overflow: hidden;
 }
 
 .topbar {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
   padding: 0 4px;
   flex-shrink: 0;
 }
@@ -332,18 +327,23 @@ onUnmounted(() => {
   width: 40px;
   height: 40px;
   border-radius: 12px;
-  background: linear-gradient(145deg, #5a96cc, #6ec49a);
-  color: #1f2836;
-  font-weight: 700;
-  font-size: 14px;
-  display: grid;
-  place-items: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: var(--aw-shadow);
+  border: 1px solid var(--aw-border);
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .topbar h1 {
   margin: 0;
   font-size: 20px;
   font-weight: 650;
+  letter-spacing: 0.01em;
 }
 
 .topbar p {

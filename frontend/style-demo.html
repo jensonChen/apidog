@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ApiDog · 样式 Demo</title>
+    <link rel="icon" href="./public/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate icon" href="./public/favicon.png" />
+    <style>
+      /* ========== Theme tokens ========== */
+      [data-theme="A"] {
+        --aw-bg: #1c242e;
+        --aw-bg-panel: #243040;
+        --aw-bg-elevated: #2c3a4c;
+        --aw-bg-input: #334456;
+        --aw-text: #d5dde8;
+        --aw-text-muted: #8b97a8;
+        --aw-accent: #6ea8c9;
+        --aw-accent-soft: rgba(110, 168, 201, 0.16);
+        --aw-send: #6aafa0;
+        --aw-send-deep: #4f8f82;
+        --aw-border: #3a4a5c;
+        --aw-danger: #c9928c;
+        --aw-glow-a: rgba(110, 168, 201, 0.1);
+        --aw-glow-b: rgba(106, 175, 160, 0.08);
+        --aw-radius: 10px;
+        --aw-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset,
+          0 8px 24px rgba(0, 0, 0, 0.22);
+        --label: "A · 石墨蓝 · 仪表台（推荐）";
+      }
+
+      [data-theme="B"] {
+        --aw-bg: #1a1714;
+        --aw-bg-panel: #24201c;
+        --aw-bg-elevated: #2e2924;
+        --aw-bg-input: #38322c;
+        --aw-text: #e6dfd4;
+        --aw-text-muted: #9a9186;
+        --aw-accent: #c9a66b;
+        --aw-accent-soft: rgba(201, 166, 107, 0.14);
+        --aw-send: #7a9e78;
+        --aw-send-deep: #5f815e;
+        --aw-border: #3f3830;
+        --aw-danger: #c9897a;
+        --aw-glow-a: rgba(201, 166, 107, 0.08);
+        --aw-glow-b: rgba(122, 158, 120, 0.06);
+        --aw-radius: 8px;
+        --aw-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
+          0 10px 28px rgba(0, 0, 0, 0.35);
+        --label: "B · 暖炭灰 · 终端感";
+      }
+
+      [data-theme="C"] {
+        --aw-bg: #e8ecef;
+        --aw-bg-panel: #f4f6f8;
+        --aw-bg-elevated: #ffffff;
+        --aw-bg-input: #ffffff;
+        --aw-text: #2c3642;
+        --aw-text-muted: #6b7785;
+        --aw-accent: #3d7ea6;
+        --aw-accent-soft: rgba(61, 126, 166, 0.12);
+        --aw-send: #3d8f7c;
+        --aw-send-deep: #2f7263;
+        --aw-border: #cfd6de;
+        --aw-danger: #b56b63;
+        --aw-glow-a: rgba(61, 126, 166, 0.08);
+        --aw-glow-b: rgba(61, 143, 124, 0.06);
+        --aw-radius: 10px;
+        --aw-shadow: 0 1px 2px rgba(30, 40, 50, 0.04),
+          0 8px 20px rgba(30, 40, 50, 0.06);
+        --label: "C · 雾灰浅色 · 纸面感";
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        background: var(--aw-bg);
+        color: var(--aw-text);
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      /* ========== Picker bar ========== */
+      .picker {
+        flex-shrink: 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--aw-border);
+        background: var(--aw-bg-panel);
+        position: sticky;
+        top: 0;
+        z-index: 20;
+      }
+
+      .picker-left {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      .picker-title {
+        font-size: 13px;
+        color: var(--aw-text-muted);
+        letter-spacing: 0.02em;
+      }
+
+      .picker-title strong {
+        color: var(--aw-text);
+        font-weight: 650;
+      }
+
+      .theme-btns {
+        display: flex;
+        gap: 8px;
+      }
+
+      .theme-btn {
+        border: 1px solid var(--aw-border);
+        background: var(--aw-bg-input);
+        color: var(--aw-text-muted);
+        border-radius: 8px;
+        padding: 7px 14px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: border-color 0.15s, color 0.15s, background 0.15s;
+      }
+
+      .theme-btn:hover {
+        border-color: var(--aw-accent);
+        color: var(--aw-text);
+      }
+
+      .theme-btn.active {
+        background: var(--aw-accent-soft);
+        border-color: var(--aw-accent);
+        color: var(--aw-accent);
+        font-weight: 600;
+      }
+
+      .picker-note {
+        font-size: 12px;
+        color: var(--aw-text-muted);
+      }
+
+      .picker-note code {
+        font-family: Consolas, monospace;
+        background: var(--aw-bg-input);
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid var(--aw-border);
+      }
+
+      /* ========== Logo strip ========== */
+      .logo-strip {
+        flex-shrink: 0;
+        display: flex;
+        gap: 20px;
+        align-items: center;
+        padding: 14px 18px;
+        border-bottom: 1px solid var(--aw-border);
+        background: color-mix(in srgb, var(--aw-bg-panel) 85%, transparent);
+      }
+
+      .logo-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border: 1px solid var(--aw-border);
+        border-radius: var(--aw-radius);
+        background: var(--aw-bg-elevated);
+        box-shadow: var(--aw-shadow);
+      }
+
+      .logo-card img,
+      .logo-card .svg-wrap {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: block;
+      }
+
+      .logo-card .meta {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .logo-card .meta b {
+        font-size: 13px;
+      }
+
+      .logo-card .meta span {
+        font-size: 11px;
+        color: var(--aw-text-muted);
+      }
+
+      .tab-mock {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 8px 8px 0 0;
+        background: #2b2b2b;
+        color: #ddd;
+        font-size: 12px;
+        font-family: system-ui, sans-serif;
+        border: 1px solid #3a3a3a;
+        max-width: 220px;
+      }
+
+      .tab-mock img {
+        width: 16px;
+        height: 16px;
+        border-radius: 3px;
+      }
+
+      /* ========== Workbench mock ========== */
+      .workbench {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 12% 8%, var(--aw-glow-a), transparent 36%),
+          radial-gradient(circle at 88% 0%, var(--aw-glow-b), transparent 32%),
+          var(--aw-bg);
+      }
+
+      .sidebar {
+        width: 280px;
+        flex-shrink: 0;
+        background: var(--aw-bg-panel);
+        border-right: 1px solid var(--aw-border);
+        display: flex;
+        flex-direction: column;
+        padding: 12px;
+        gap: 10px;
+      }
+
+      .brand {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        padding: 4px 2px 8px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+
+      .brand-mark img {
+        width: 100%;
+        height: 100%;
+        display: block;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 650;
+      }
+
+      .brand p {
+        margin: 2px 0 0;
+        font-size: 11px;
+        color: var(--aw-text-muted);
+      }
+
+      .side-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 6px;
+      }
+
+      .btn {
+        border: 1px solid var(--aw-border);
+        background: var(--aw-bg-input);
+        color: var(--aw-text);
+        border-radius: 8px;
+        padding: 7px 10px;
+        font-size: 12px;
+        cursor: default;
+      }
+
+      .btn.danger {
+        border-color: color-mix(in srgb, var(--aw-danger) 55%, var(--aw-border));
+        color: var(--aw-danger);
+        background: color-mix(in srgb, var(--aw-danger) 8%, var(--aw-bg-input));
+      }
+
+      .btn.primary {
+        background: var(--aw-accent-soft);
+        border-color: var(--aw-accent);
+        color: var(--aw-accent);
+      }
+
+      .btn.send {
+        background: var(--aw-send-deep);
+        border-color: var(--aw-send-deep);
+        color: #f2faf7;
+        font-weight: 600;
+      }
+
+      .panel-title {
+        font-size: 12px;
+        color: var(--aw-text-muted);
+        margin: 4px 0;
+      }
+
+      .tree {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        font-size: 13px;
+      }
+
+      .folder {
+        padding: 6px 8px;
+        color: var(--aw-text);
+        border-radius: 6px;
+      }
+
+      .req {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px 6px 18px;
+        border-radius: 6px;
+        color: var(--aw-text-muted);
+      }
+
+      .req.active {
+        background: var(--aw-accent-soft);
+        color: var(--aw-text);
+      }
+
+      .method {
+        font-family: Consolas, "Cascadia Code", monospace;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--aw-send);
+        width: 32px;
+      }
+
+      .method.post {
+        color: var(--aw-accent);
+      }
+
+      .center {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 12px 10px 12px 0;
+        gap: 10px;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 6px;
+        padding: 0 4px;
+      }
+
+      .tab {
+        border: 1px solid var(--aw-border);
+        background: var(--aw-bg-input);
+        color: var(--aw-text-muted);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 12px;
+      }
+
+      .tab.active {
+        background: var(--aw-accent-soft);
+        border-color: var(--aw-accent);
+        color: var(--aw-text);
+      }
+
+      .editor {
+        flex: 1;
+        min-height: 0;
+        background: var(--aw-bg-panel);
+        border: 1px solid var(--aw-border);
+        border-radius: var(--aw-radius);
+        box-shadow: var(--aw-shadow);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .editor-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--aw-border);
+      }
+
+      .mode-group {
+        display: flex;
+        gap: 0;
+        border: 1px solid var(--aw-border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+
+      .mode {
+        padding: 6px 12px;
+        font-size: 12px;
+        color: var(--aw-text-muted);
+        background: var(--aw-bg-input);
+        border-right: 1px solid var(--aw-border);
+      }
+
+      .mode:last-child {
+        border-right: none;
+      }
+
+      .mode.on {
+        background: var(--aw-accent-soft);
+        color: var(--aw-accent);
+        font-weight: 600;
+      }
+
+      .toolbar-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .curl {
+        flex: 1;
+        margin: 0;
+        padding: 14px 16px;
+        font-family: Consolas, "Cascadia Code", monospace;
+        font-size: 12.5px;
+        line-height: 1.55;
+        color: var(--aw-text);
+        background: var(--aw-bg-input);
+        overflow: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      .curl .k {
+        color: var(--aw-accent);
+      }
+
+      .curl .s {
+        color: var(--aw-send);
+      }
+
+      .curl .c {
+        color: var(--aw-text-muted);
+      }
+
+      .right {
+        width: 340px;
+        flex-shrink: 0;
+        padding: 12px 12px 12px 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .response {
+        flex: 1;
+        min-height: 180px;
+        background: var(--aw-bg-panel);
+        border: 1px solid var(--aw-border);
+        border-radius: var(--aw-radius);
+        box-shadow: var(--aw-shadow);
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .response h3 {
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .empty {
+        flex: 1;
+        display: grid;
+        place-items: center;
+        color: var(--aw-text-muted);
+        font-size: 13px;
+        text-align: center;
+        line-height: 1.6;
+        border: 1px dashed var(--aw-border);
+        border-radius: 8px;
+        background: color-mix(in srgb, var(--aw-bg-input) 60%, transparent);
+      }
+
+      .history {
+        background: var(--aw-bg-panel);
+        border: 1px solid var(--aw-border);
+        border-radius: var(--aw-radius);
+        padding: 10px 12px;
+        box-shadow: var(--aw-shadow);
+      }
+
+      .history h3 {
+        margin: 0 0 8px;
+        font-size: 12px;
+        color: var(--aw-text-muted);
+        font-weight: 600;
+      }
+
+      .hist-row {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        padding: 6px 0;
+        border-top: 1px solid var(--aw-border);
+        color: var(--aw-text-muted);
+      }
+
+      .hist-row:first-of-type {
+        border-top: none;
+      }
+
+      .ok {
+        color: var(--aw-send);
+        font-family: Consolas, monospace;
+      }
+
+      .theme-badge {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 30;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--aw-border);
+        background: var(--aw-bg-elevated);
+        color: var(--aw-text-muted);
+        font-size: 12px;
+        box-shadow: var(--aw-shadow);
+      }
+
+      .theme-badge::before {
+        content: var(--label);
+      }
+
+      @media (max-width: 960px) {
+        .right {
+          display: none;
+        }
+        .sidebar {
+          width: 220px;
+        }
+      }
+    </style>
+  </head>
+  <body data-theme="A">
+    <div class="picker">
+      <div class="picker-left">
+        <div class="picker-title">
+          <strong>ApiDog 样式对比 Demo</strong> · 仅视觉，无交互逻辑
+        </div>
+        <div class="theme-btns" role="tablist">
+          <button class="theme-btn active" data-t="A" type="button">
+            A 石墨蓝
+          </button>
+          <button class="theme-btn" data-t="B" type="button">B 暖炭灰</button>
+          <button class="theme-btn" data-t="C" type="button">C 雾灰浅色</button>
+        </div>
+      </div>
+      <div class="picker-note">
+        选好看的方案后回复 <code>A</code> / <code>B</code> / <code>C</code>
+      </div>
+    </div>
+
+    <div class="logo-strip">
+      <div class="logo-card">
+        <img src="./public/favicon.svg" alt="ApiDog icon" width="40" height="40" />
+        <div class="meta">
+          <b>新图标（SVG）</b>
+          <span>浏览器标签 / 侧栏品牌</span>
+        </div>
+      </div>
+      <div class="logo-card">
+        <img src="./public/favicon.png" alt="ApiDog png" width="40" height="40" />
+        <div class="meta">
+          <b>PNG 预览</b>
+          <span>同套视觉，备用位图</span>
+        </div>
+      </div>
+      <div class="tab-mock" title="浏览器标签示意">
+        <img src="./public/favicon.svg" alt="" />
+        <span>ApiDog - 本地接口测试</span>
+      </div>
+    </div>
+
+    <div class="workbench">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">
+            <img src="./public/favicon.svg" alt="" />
+          </div>
+          <div>
+            <h1>ApiDog</h1>
+            <p>本地接口测试工作台</p>
+          </div>
+        </div>
+        <div class="side-actions">
+          <button class="btn" type="button">新建项目</button>
+          <button class="btn danger" type="button">删项目</button>
+          <button class="btn" type="button">新建模块</button>
+          <button class="btn primary" type="button">新建接口</button>
+        </div>
+        <div class="panel-title">接口集合</div>
+        <div class="tree">
+          <div class="folder">▾ 知识库-test环境</div>
+          <div class="req active">
+            <span class="method">GET</span>
+            <span>查询知识库列表</span>
+          </div>
+          <div class="req">
+            <span class="method">GET</span>
+            <span>查询知识库详情</span>
+          </div>
+          <div class="req">
+            <span class="method post">POST</span>
+            <span>创建知识库</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="center">
+        <div class="tabs">
+          <div class="tab active">查询知识库列表 ×</div>
+          <div class="tab">空白请求 ×</div>
+          <div class="tab">+</div>
+        </div>
+        <section class="editor">
+          <div class="editor-toolbar">
+            <div class="mode-group">
+              <div class="mode">Chrome 粘贴</div>
+              <div class="mode">表单模式</div>
+              <div class="mode on">Curl 模式</div>
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn" type="button">保存</button>
+              <button class="btn send" type="button">发送</button>
+            </div>
+          </div>
+          <pre class="curl"><span class="c"># 示例 curl（仅样式预览）</span>
+curl <span class="s">'https://api.example.com/v1/knowledge'</span> \
+  -X <span class="k">GET</span> \
+  -H <span class="s">'Authorization: Bearer eyJhbGciOi...'</span> \
+  -H <span class="s">'Accept: application/json'</span></pre>
+        </section>
+      </main>
+
+      <aside class="right">
+        <section class="response">
+          <h3>响应结果</h3>
+          <div class="empty">发送请求后，响应数据将显示在这里</div>
+        </section>
+        <section class="history">
+          <h3>最近请求</h3>
+          <div class="hist-row">
+            <span>GET /v1/knowledge</span>
+            <span class="ok">200</span>
+          </div>
+          <div class="hist-row">
+            <span>POST /v1/docs</span>
+            <span class="ok">201</span>
+          </div>
+        </section>
+      </aside>
+    </div>
+
+    <div class="theme-badge" aria-hidden="true"></div>
+
+    <script>
+      const root = document.body;
+      const buttons = document.querySelectorAll(".theme-btn");
+
+      function applyTheme(key) {
+        root.setAttribute("data-theme", key);
+        buttons.forEach((btn) => {
+          btn.classList.toggle("active", btn.dataset.t === key);
+        });
+        try {
+          localStorage.setItem("apidog-style-demo-theme", key);
+        } catch (_) {}
+      }
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => applyTheme(btn.dataset.t));
+      });
+
+      try {
+        const saved = localStorage.getItem("apidog-style-demo-theme");
+        if (saved === "A" || saved === "B" || saved === "C") {
+          applyTheme(saved);
+        }
+      } catch (_) {}
+    </script>
+  </body>
+</html>

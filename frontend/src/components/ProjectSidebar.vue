@@ -379,6 +379,7 @@ function methodClass(method?: string): string {
   padding: 18px 16px;
   box-sizing: border-box;
   overflow: auto;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
 }
 
 .sidebar-head {
@@ -457,8 +458,8 @@ function methodClass(method?: string): string {
   width: 22px;
   height: 18px;
   border-radius: 4px;
-  color: #d4b483;
-  background: rgba(212, 180, 131, 0.14);
+  color: var(--aw-warn);
+  background: var(--aw-warn-soft);
   flex-shrink: 0;
 }
 
@@ -478,23 +479,23 @@ function methodClass(method?: string): string {
 }
 
 .method-get {
-  color: #6ec49a;
-  background: rgba(110, 196, 154, 0.14);
+  color: var(--aw-send);
+  background: var(--aw-send-soft);
 }
 
 .method-post {
-  color: #7eb3e8;
-  background: rgba(126, 179, 232, 0.16);
+  color: var(--aw-accent);
+  background: var(--aw-accent-soft);
 }
 
 .method-put {
-  color: #d4b483;
-  background: rgba(212, 180, 131, 0.16);
+  color: var(--aw-warn);
+  background: var(--aw-warn-soft);
 }
 
 .method-delete {
-  color: #e09a92;
-  background: rgba(224, 154, 146, 0.16);
+  color: var(--aw-danger);
+  background: var(--aw-danger-soft);
 }
 
 .node-label {

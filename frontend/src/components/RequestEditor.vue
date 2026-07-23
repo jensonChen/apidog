@@ -426,6 +426,7 @@ onUnmounted(() => {
   background: var(--aw-bg-panel);
   border: 1px solid var(--aw-border);
   border-radius: var(--aw-radius);
+  box-shadow: var(--aw-shadow);
 }
 
 .editor {
@@ -459,8 +460,10 @@ onUnmounted(() => {
 }
 
 .send-btn {
-  --el-button-bg-color: #4f9a75;
-  --el-button-border-color: #4f9a75;
+  --el-button-bg-color: var(--aw-send-deep);
+  --el-button-border-color: var(--aw-send-deep);
+  --el-button-hover-bg-color: var(--aw-send);
+  --el-button-hover-border-color: var(--aw-send);
 }
 
 .hint {

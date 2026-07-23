@@ -46,6 +46,7 @@ function formatTime(timestamp: string): string {
   background: var(--aw-bg-panel);
   border: 1px solid var(--aw-border);
   border-radius: var(--aw-radius);
+  box-shadow: var(--aw-shadow);
 }
 
 .history-panel {

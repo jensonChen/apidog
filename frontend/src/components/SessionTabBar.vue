@@ -79,6 +79,15 @@ const emit = defineEmits<{
   cursor: pointer;
   font-size: 12px;
   white-space: nowrap;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.tab-item:hover {
+  border-color: color-mix(in srgb, var(--aw-accent) 40%, var(--aw-border));
+  color: var(--aw-text);
 }
 
 .tab-item.active {
@@ -96,7 +105,7 @@ const emit = defineEmits<{
   font-size: 10px;
   padding: 1px 5px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.08);
+  background: color-mix(in srgb, var(--aw-text) 8%, transparent);
 }
 
 .tab-status.ok {
