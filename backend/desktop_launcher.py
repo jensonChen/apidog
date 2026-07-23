@@ -1,12 +1,12 @@
-"""Desktop entry: local FastAPI + pywebview window."""
+"""Desktop entry: FastAPI subprocess + pywebview window."""
 
 from __future__ import annotations
 
 import multiprocessing
 import os
 import socket
+import subprocess
 import sys
-import threading
 import time
 import traceback
 import urllib.error
@@ -33,7 +33,7 @@ from app_constants import (
     WINDOW_MIN_WIDTH,
     WINDOW_WIDTH,
 )
-from config_loader import load_config, resolve_app_icon, resolve_data_dir, resolve_frontend_dist
+from config_loader import load_config, resolve_data_dir, resolve_frontend_dist
 from workspace_export import build_workspace_export_zip
 
 
@@ -155,48 +155,90 @@ def _ensure_stdio() -> None:
         sys.stderr = open(os.devnull, "w", encoding="utf-8")
 
 
-def _start_server(host: str, port: int) -> None:
+def _start_server_process(host: str, port: int) -> subprocess.Popen[Any]:
+    """
+    必须用独立进程跑 uvicorn。
+    同进程线程 + WebView2 加载本机 HTTP 会在 Windows 上把整进程卡成「未响应」。
+    """
+    env = os.environ.copy()
+    env["APIDOG_USE_APPDATA"] = "1"
+    env["APIDOG_DESKTOP_SHELL"] = "1"
+    env.setdefault("APIDOG_DATA_DIR", str(resolve_data_dir()))
+
+    if getattr(sys, "frozen", False):
+        # PyInstaller onedir: 子进程带 --apidog-server 进入仅服务模式
+        command = [sys.executable, "--apidog-server", host, str(port)]
+        cwd = str(Path(sys.executable).resolve().parent)
+    else:
+        command = [
+            sys.executable,
+            "-c",
+            (
+                "import uvicorn; from main import app; "
+                f"uvicorn.run(app, host={host!r}, port={port}, "
+                "log_level='warning', log_config=None)"
+            ),
+        ]
+        cwd = str(Path(__file__).resolve().parent)
+
+    creationflags = 0
+    if sys.platform == "win32":
+        creationflags = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+    proc = subprocess.Popen(
+        command,
+        cwd=cwd,
+        env=env,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        creationflags=creationflags,
+    )
+    _append_startup_log(f"server subprocess pid={proc.pid} cmd={command}")
+    return proc
+
+
+def _stop_server_process(proc: subprocess.Popen[Any] | None) -> None:
+    if proc is None:
+        return
+    if proc.poll() is not None:
+        return
+    proc.terminate()
     try:
-        _ensure_stdio()
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait(timeout=3)
+
+
+def run_server_mode(host: str, port: int) -> int:
+    """Child-process entry: only serve FastAPI."""
+    _ensure_stdio()
+    try:
         import uvicorn
         from main import app
 
-        _append_startup_log(f"uvicorn starting on {host}:{port}")
-        uvicorn.run(
-            app,
-            host=host,
-            port=port,
-            log_level="warning",
-            reload=False,
-            log_config=None,
-        )
+        _append_startup_log(f"server-mode uvicorn {host}:{port}")
+        uvicorn.run(app, host=host, port=port, log_level="warning", log_config=None)
+        return 0
     except Exception:
-        _append_startup_log("uvicorn crashed:\n" + traceback.format_exc())
-        raise
-
-
-def _copy_icon_beside_exe() -> Path | None:
-    icon = resolve_app_icon()
-    if icon is None or not getattr(sys, "frozen", False):
-        return icon
-    target = Path(sys.executable).resolve().parent / "app.ico"
-    try:
-        if icon.resolve() != target.resolve():
-            target.write_bytes(icon.read_bytes())
-        return target
-    except OSError as exc:
-        _append_startup_log(f"copy icon failed: {exc}")
-        return icon
+        _append_startup_log("server-mode crashed:\n" + traceback.format_exc())
+        return 1
 
 
 def run() -> int:
     multiprocessing.freeze_support()
     _ensure_stdio()
+
+    # Frozen child: ApiDog.exe --apidog-server 127.0.0.1 19527
+    if len(sys.argv) >= 4 and sys.argv[1] == "--apidog-server":
+        return run_server_mode(sys.argv[2], int(sys.argv[3]))
+
     mutex_handle = _acquire_single_instance()
     if sys.platform == "win32" and mutex_handle is None:
         _show_error(f"{APP_DISPLAY_NAME} 已在运行。")
         return 1
 
+    server_proc: subprocess.Popen[Any] | None = None
     try:
         data_dir = resolve_data_dir()
         data_dir.mkdir(parents=True, exist_ok=True)
@@ -206,9 +248,7 @@ def run() -> int:
         host = DEFAULT_HOST
         port = int(config["port"])
         frontend_dist = resolve_frontend_dist()
-        icon_path = _copy_icon_beside_exe()
         _append_startup_log(f"frontend_dist={frontend_dist} exists={frontend_dist.exists()}")
-        _append_startup_log(f"icon={icon_path}")
 
         if not frontend_dist.exists():
             raise RuntimeError(f"未找到前端资源目录: {frontend_dist}")
@@ -218,14 +258,7 @@ def run() -> int:
                 f"端口 {port} 已被占用。请关闭占用程序后重试，或修改 {data_dir / 'config.json'} 中的 port。"
             )
 
-        server_thread = threading.Thread(
-            target=_start_server,
-            kwargs={"host": host, "port": port},
-            name="ApiDogServer",
-            daemon=True,
-        )
-        server_thread.start()
-
+        server_proc = _start_server_process(host, port)
         base_url = f"http://{host}:{port}"
         _wait_until_healthy(base_url)
         _append_startup_log(f"healthy {base_url}")
@@ -233,26 +266,36 @@ def run() -> int:
         import webview
 
         window_api = DesktopWindowApi()
-        # easy_drag=True：无边框窗口可拖动；勿依赖 WebView CSS app-region（易失效）
         window = webview.create_window(
             APP_DISPLAY_NAME,
             url=base_url,
             width=WINDOW_WIDTH,
             height=WINDOW_HEIGHT,
             min_size=(WINDOW_MIN_WIDTH, WINDOW_MIN_HEIGHT),
-            frameless=True,
-            easy_drag=True,
-            shadow=True,
-            js_api=window_api,
+            frameless=False,
+            easy_drag=False,
+            shadow=False,
             background_color=WINDOW_BACKGROUND_COLOR,
         )
         window_api.window = window
+
+        def _on_loaded() -> None:
+            try:
+                # 禁止在 create_window(js_api=...) 时注入：冻结包下会卡成「未响应」
+                window.expose(window_api.export_workspace)
+                _append_startup_log("export_workspace exposed after loaded")
+            except Exception as exc:
+                _append_startup_log(f"expose api failed: {exc}")
+
+        window.events.loaded += _on_loaded
         webview.start()
         _append_startup_log("window closed")
         return 0
     except Exception as exc:
         _show_error(f"{APP_DISPLAY_NAME} 启动失败:\n{exc}")
         return 1
+    finally:
+        _stop_server_process(server_proc)
 
 
 if __name__ == "__main__":

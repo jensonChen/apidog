@@ -2,7 +2,7 @@
 ; Build after PyInstaller output exists at packaging\dist\ApiDog\
 
 #define MyAppName "ApiDog"
-#define MyAppVersion "2.1.3"
+#define MyAppVersion "2.1.6"
 #define MyAppPublisher "ApiDog"
 #define MyAppExeName "ApiDog.exe"
 #define MyAppSourceDir "..\dist\ApiDog"
