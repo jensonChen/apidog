@@ -54,7 +54,8 @@ const emit = defineEmits<{
   align-items: center;
   gap: 10px;
   margin-bottom: 10px;
-  min-height: 38px;
+  min-height: 36px;
+  flex-shrink: 0;
 }
 
 .tab-list {

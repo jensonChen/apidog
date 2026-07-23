@@ -378,11 +378,13 @@ function methodClass(method?: string): string {
 .sidebar {
   flex-shrink: 0;
   background: var(--aw-bg-panel);
-  border-right: 1px solid var(--aw-border);
-  padding: 18px 16px;
+  border: 1px solid var(--aw-border);
+  border-radius: var(--aw-radius);
+  padding: 14px 14px;
   box-sizing: border-box;
   overflow: auto;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+  box-shadow: var(--aw-shadow);
+  height: 100%;
 }
 
 .sidebar-head {

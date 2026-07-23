@@ -417,16 +417,16 @@ onUnmounted(() => {
 
 <style scoped>
 .panel {
-  background: var(--aw-bg-panel);
-  border: 1px solid var(--aw-border);
-  border-radius: var(--aw-radius);
-  box-shadow: var(--aw-shadow);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .editor {
   flex: 1;
   min-height: 0;
-  padding: 16px;
+  padding: 4px 2px 0;
   overflow: auto;
 }
 
@@ -439,7 +439,7 @@ onUnmounted(() => {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--aw-bg-panel);
+  background: transparent;
   padding-bottom: 8px;
 }
 
